@@ -14,20 +14,41 @@ type Client = {
   type: string;
 };
 
+type Vente = {
+  id: number;
+  numeroClient: string;
+  nomClient: string;
+  type: "Particulier" | "Professionnel";
+  ville: string;
+  engagement: "0 mois" | "12 mois" | "24 mois" | "36 mois";
+  prixKit: number;
+  abonnement: number;
+  statut: "Signé" | "Posé" | "Payé";
+  commission: number;
+};
+
 export default function Page({
   params,
 }: {
   params: { numero: string };
 }) {
   const [client, setClient] = useState<Client | null>(null);
+  const [ventesClient, setVentesClient] = useState<Vente[]>([]);
 
   useEffect(() => {
-    const data = localStorage.getItem("clientsX3BZ");
-    if (!data) return;
+    const dataClients = localStorage.getItem("clientsX3BZ");
+    if (dataClients) {
+      const clients: Client[] = JSON.parse(dataClients);
+      const found = clients.find((c) => c.numero === params.numero) || null;
+      setClient(found);
+    }
 
-    const clients: Client[] = JSON.parse(data);
-    const found = clients.find((c) => c.numero === params.numero) || null;
-    setClient(found);
+    const dataVentes = localStorage.getItem("ventesX3BZ");
+    if (dataVentes) {
+      const ventes: Vente[] = JSON.parse(dataVentes);
+      const filtrees = ventes.filter((v) => v.numeroClient === params.numero);
+      setVentesClient(filtrees);
+    }
   }, [params.numero]);
 
   if (!client) {
@@ -38,6 +59,11 @@ export default function Page({
       </div>
     );
   }
+
+  const derniereVente = ventesClient[0] || null;
+  const commissionVente = derniereVente ? derniereVente.commission : 0;
+  const commissionInstallation = 0;
+  const commissionTotale = commissionVente + commissionInstallation;
 
   return (
     <div style={{ maxWidth: "900px", margin: "0 auto" }}>
@@ -73,10 +99,19 @@ export default function Page({
         }}
       >
         <h2 style={{ marginTop: 0 }}>Vente</h2>
-        <p>Kit vendu : START</p>
-        <p>Engagement : à compléter</p>
-        <p>Abonnement : à compléter</p>
-        <p>Codes promo utilisés : à compléter</p>
+
+        {derniereVente ? (
+          <>
+            <p><strong>Kit vendu :</strong> START</p>
+            <p><strong>Engagement :</strong> {derniereVente.engagement}</p>
+            <p><strong>Abonnement :</strong> {derniereVente.abonnement} €</p>
+            <p><strong>Prix kit :</strong> {derniereVente.prixKit} €</p>
+            <p><strong>Statut :</strong> {derniereVente.statut}</p>
+            <p><strong>Codes promo utilisés :</strong> à compléter</p>
+          </>
+        ) : (
+          <p>Aucune vente liée à ce client pour le moment.</p>
+        )}
       </div>
 
       <div
@@ -89,9 +124,9 @@ export default function Page({
         }}
       >
         <h2 style={{ marginTop: 0 }}>Commission pure</h2>
-        <p>Commission vente : à compléter</p>
-        <p>Commission installation : à compléter</p>
-        <p>Commission totale liée à ce client : à compléter</p>
+        <p><strong>Commission vente :</strong> {commissionVente} €</p>
+        <p><strong>Commission installation :</strong> {commissionInstallation} €</p>
+        <p><strong>Commission totale liée à ce client :</strong> {commissionTotale} €</p>
       </div>
 
       <div
