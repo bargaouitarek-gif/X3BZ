@@ -6,24 +6,63 @@ type ClientType = "Particulier" | "Professionnel";
 type Engagement = "0 mois" | "12 mois" | "24 mois" | "36 mois";
 type Statut = "Signé" | "Posé" | "Payé";
 
+type Client = {
+  id: number;
+  numero: string;
+  nom: string;
+  telephone: string;
+  mail: string;
+  adresse: string;
+  codePostal: string;
+  ville: string;
+  type: string;
+};
+
 type Vente = {
   id: number;
-  client: string;
+  numeroClient: string;
+  nomClient: string;
   type: ClientType;
   ville: string;
   engagement: Engagement;
   prixKit: number;
   abonnement: number;
   statut: Statut;
+  commission: number;
 };
 
 export default function Page() {
-  const [client, setClient] = useState("");
+  const [clients, setClients] = useState<Client[]>([]);
+  const [rechercheClient, setRechercheClient] = useState("");
+  const [clientSelectionne, setClientSelectionne] = useState<Client | null>(null);
+
   const [type, setType] = useState<ClientType>("Particulier");
   const [ville, setVille] = useState("");
   const [engagement, setEngagement] = useState<Engagement>("12 mois");
   const [statut, setStatut] = useState<Statut>("Signé");
   const [ventes, setVentes] = useState<Vente[]>([]);
+
+  useEffect(() => {
+    const dataClients = localStorage.getItem("clientsX3BZ");
+    if (dataClients) {
+      setClients(JSON.parse(dataClients));
+    }
+
+    const dataVentes = localStorage.getItem("ventesX3BZ");
+    if (dataVentes) {
+      setVentes(JSON.parse(dataVentes));
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("ventesX3BZ", JSON.stringify(ventes));
+  }, [ventes]);
+
+  const clientsFiltres = clients.filter((c) =>
+    `${c.numero} ${c.nom} ${c.telephone} ${c.mail} ${c.ville}`
+      .toLowerCase()
+      .includes(rechercheClient.toLowerCase())
+  );
 
   const engagementsDisponibles: Engagement[] =
     type === "Particulier"
@@ -34,7 +73,7 @@ export default function Page() {
     if (!engagementsDisponibles.includes(engagement)) {
       setEngagement(engagementsDisponibles[0]);
     }
-  }, [type]);
+  }, [type, engagement, engagementsDisponibles]);
 
   const prixKit = useMemo(() => {
     if (engagement === "0 mois") return 799;
@@ -46,22 +85,39 @@ export default function Page() {
     return type === "Particulier" ? 51.9 : 65;
   }, [type]);
 
+  function calculerCommission(statut: Statut) {
+    if (statut === "Signé") return 110;
+    if (statut === "Posé") return 130;
+    return 150;
+  }
+
+  function choisirClient(client: Client) {
+    setClientSelectionne(client);
+    setRechercheClient(`${client.numero} - ${client.nom}`);
+    setVille(client.ville || "");
+    setType(client.type === "Professionnel" ? "Professionnel" : "Particulier");
+  }
+
   function ajouterVente() {
-    if (!client.trim() || !ville.trim()) return;
+    if (!clientSelectionne) return;
 
     const nouvelleVente: Vente = {
       id: Date.now(),
-      client: client.trim(),
+      numeroClient: clientSelectionne.numero,
+      nomClient: clientSelectionne.nom,
       type,
       ville: ville.trim(),
       engagement,
       prixKit,
       abonnement,
       statut,
+      commission: calculerCommission(statut),
     };
 
     setVentes([nouvelleVente, ...ventes]);
-    setClient("");
+
+    setRechercheClient("");
+    setClientSelectionne(null);
     setVille("");
     setType("Particulier");
     setEngagement("12 mois");
@@ -74,7 +130,6 @@ export default function Page() {
         minHeight: "100vh",
         background: "#f5f7fb",
         fontFamily: "Arial, sans-serif",
-        padding: "24px",
         color: "#111827",
       }}
     >
@@ -90,7 +145,7 @@ export default function Page() {
         >
           <h1 style={{ margin: 0, fontSize: "32px" }}>Ventes</h1>
           <p style={{ marginTop: "10px", color: "#d1d5db" }}>
-            Saisie rapide d’une vente START
+            Saisie d’une vente liée à un client existant
           </p>
         </div>
 
@@ -146,6 +201,76 @@ export default function Page() {
         >
           <h2 style={{ marginTop: 0 }}>Ajouter une vente</h2>
 
+          <div style={{ marginBottom: "16px" }}>
+            <label style={{ display: "block", marginBottom: "6px" }}>
+              Rechercher un client
+            </label>
+            <input
+              value={rechercheClient}
+              onChange={(e) => {
+                setRechercheClient(e.target.value);
+                setClientSelectionne(null);
+              }}
+              placeholder="Numéro, nom, téléphone, mail, ville..."
+              style={{
+                width: "100%",
+                padding: "10px",
+                borderRadius: "8px",
+                border: "1px solid #d1d5db",
+                marginBottom: "10px",
+              }}
+            />
+
+            {rechercheClient && !clientSelectionne && (
+              <div
+                style={{
+                  border: "1px solid #e5e7eb",
+                  borderRadius: "12px",
+                  overflow: "hidden",
+                }}
+              >
+                {clientsFiltres.length === 0 ? (
+                  <div style={{ padding: "12px", color: "#6b7280" }}>
+                    Aucun client trouvé.
+                  </div>
+                ) : (
+                  clientsFiltres.slice(0, 6).map((client) => (
+                    <button
+                      key={client.id}
+                      onClick={() => choisirClient(client)}
+                      style={{
+                        width: "100%",
+                        textAlign: "left",
+                        padding: "12px",
+                        border: "none",
+                        borderBottom: "1px solid #e5e7eb",
+                        background: "white",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <strong>{client.numero}</strong> — {client.nom} ({client.ville})
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
+
+            {clientSelectionne && (
+              <div
+                style={{
+                  marginTop: "10px",
+                  padding: "12px",
+                  borderRadius: "10px",
+                  background: "#ecfdf5",
+                  color: "#065f46",
+                }}
+              >
+                Client sélectionné : <strong>{clientSelectionne.numero}</strong> —{" "}
+                {clientSelectionne.nom}
+              </div>
+            )}
+          </div>
+
           <div
             style={{
               display: "grid",
@@ -153,23 +278,6 @@ export default function Page() {
               gap: "12px",
             }}
           >
-            <div>
-              <label style={{ display: "block", marginBottom: "6px" }}>
-                Client
-              </label>
-              <input
-                value={client}
-                onChange={(e) => setClient(e.target.value)}
-                placeholder="Nom du client"
-                style={{
-                  width: "100%",
-                  padding: "10px",
-                  borderRadius: "8px",
-                  border: "1px solid #d1d5db",
-                }}
-              />
-            </div>
-
             <div>
               <label style={{ display: "block", marginBottom: "6px" }}>
                 Type de client
@@ -280,24 +388,28 @@ export default function Page() {
               <table style={{ width: "100%", borderCollapse: "collapse" }}>
                 <thead>
                   <tr style={{ textAlign: "left", color: "#6b7280" }}>
+                    <th style={{ padding: "10px" }}>Numéro client</th>
                     <th style={{ padding: "10px" }}>Client</th>
                     <th style={{ padding: "10px" }}>Type</th>
                     <th style={{ padding: "10px" }}>Ville</th>
                     <th style={{ padding: "10px" }}>Engagement</th>
                     <th style={{ padding: "10px" }}>Kit</th>
                     <th style={{ padding: "10px" }}>Abonnement</th>
+                    <th style={{ padding: "10px" }}>Commission</th>
                     <th style={{ padding: "10px" }}>Statut</th>
                   </tr>
                 </thead>
                 <tbody>
                   {ventes.map((vente) => (
                     <tr key={vente.id} style={{ borderTop: "1px solid #e5e7eb" }}>
-                      <td style={{ padding: "10px" }}>{vente.client}</td>
+                      <td style={{ padding: "10px" }}>{vente.numeroClient}</td>
+                      <td style={{ padding: "10px" }}>{vente.nomClient}</td>
                       <td style={{ padding: "10px" }}>{vente.type}</td>
                       <td style={{ padding: "10px" }}>{vente.ville}</td>
                       <td style={{ padding: "10px" }}>{vente.engagement}</td>
                       <td style={{ padding: "10px" }}>{vente.prixKit} €</td>
                       <td style={{ padding: "10px" }}>{vente.abonnement} €</td>
+                      <td style={{ padding: "10px" }}>{vente.commission} €</td>
                       <td style={{ padding: "10px" }}>{vente.statut}</td>
                     </tr>
                   ))}
@@ -309,4 +421,4 @@ export default function Page() {
       </div>
     </main>
   );
-}
+                                           }
