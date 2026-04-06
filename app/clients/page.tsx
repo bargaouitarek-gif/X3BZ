@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 
 type Client = {
   id: number;
@@ -8,6 +9,8 @@ type Client = {
   nom: string;
   telephone: string;
   mail: string;
+  adresse: string;
+  codePostal: string;
   ville: string;
   type: string;
 };
@@ -17,22 +20,37 @@ export default function Page() {
   const [nom, setNom] = useState("");
   const [telephone, setTelephone] = useState("");
   const [mail, setMail] = useState("");
+  const [adresse, setAdresse] = useState("");
+  const [codePostal, setCodePostal] = useState("");
   const [ville, setVille] = useState("");
   const [type, setType] = useState("Particulier");
 
   const [clients, setClients] = useState<Client[]>([]);
   const [search, setSearch] = useState("");
 
+  useEffect(() => {
+    const data = localStorage.getItem("clientsX3BZ");
+    if (data) {
+      setClients(JSON.parse(data));
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("clientsX3BZ", JSON.stringify(clients));
+  }, [clients]);
+
   function ajouterClient() {
     if (!numero.trim() || !nom.trim()) return;
 
     const nouveauClient: Client = {
       id: Date.now(),
-      numero,
-      nom,
-      telephone,
-      mail,
-      ville,
+      numero: numero.trim(),
+      nom: nom.trim(),
+      telephone: telephone.trim(),
+      mail: mail.trim(),
+      adresse: adresse.trim(),
+      codePostal: codePostal.trim(),
+      ville: ville.trim(),
       type,
     };
 
@@ -42,12 +60,14 @@ export default function Page() {
     setNom("");
     setTelephone("");
     setMail("");
+    setAdresse("");
+    setCodePostal("");
     setVille("");
     setType("Particulier");
   }
 
   const clientsFiltres = clients.filter((c) =>
-    `${c.numero} ${c.nom} ${c.telephone} ${c.mail} ${c.ville}`
+    `${c.numero} ${c.nom} ${c.telephone} ${c.mail} ${c.adresse} ${c.codePostal} ${c.ville}`
       .toLowerCase()
       .includes(search.toLowerCase())
   );
@@ -57,7 +77,7 @@ export default function Page() {
       <h1>Clients</h1>
 
       <input
-        placeholder="Recherche numéro, nom, téléphone, mail, ville..."
+        placeholder="Recherche numéro, nom, téléphone, mail, adresse, ville..."
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         style={{
@@ -69,7 +89,14 @@ export default function Page() {
         }}
       />
 
-      <div style={{ marginBottom: "20px" }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+          gap: "10px",
+          marginBottom: "20px",
+        }}
+      >
         <input
           placeholder="Numéro client"
           value={numero}
@@ -95,6 +122,18 @@ export default function Page() {
         />
 
         <input
+          placeholder="Adresse"
+          value={adresse}
+          onChange={(e) => setAdresse(e.target.value)}
+        />
+
+        <input
+          placeholder="Code postal"
+          value={codePostal}
+          onChange={(e) => setCodePostal(e.target.value)}
+        />
+
+        <input
           placeholder="Ville"
           value={ville}
           onChange={(e) => setVille(e.target.value)}
@@ -104,33 +143,52 @@ export default function Page() {
           <option>Particulier</option>
           <option>Professionnel</option>
         </select>
-
-        <button onClick={ajouterClient}>Ajouter</button>
       </div>
 
-      <table width="100%">
-        <thead>
-          <tr>
-            <th>Numéro</th>
-            <th>Nom</th>
-            <th>Ville</th>
-            <th>Téléphone</th>
-            <th>Type</th>
-          </tr>
-        </thead>
+      <button
+        onClick={ajouterClient}
+        style={{
+          marginBottom: "20px",
+          padding: "10px 14px",
+          borderRadius: "8px",
+          border: "none",
+          background: "#111827",
+          color: "white",
+          cursor: "pointer",
+        }}
+      >
+        Ajouter
+      </button>
 
-        <tbody>
-          {clientsFiltres.map((c) => (
-            <tr key={c.id}>
-              <td>{c.numero}</td>
-              <td>{c.nom}</td>
-              <td>{c.ville}</td>
-              <td>{c.telephone}</td>
-              <td>{c.type}</td>
+      <div style={{ overflowX: "auto" }}>
+        <table width="100%" style={{ borderCollapse: "collapse" }}>
+          <thead>
+            <tr style={{ textAlign: "left", color: "#6b7280" }}>
+              <th style={{ padding: "10px" }}>Numéro</th>
+              <th style={{ padding: "10px" }}>Nom</th>
+              <th style={{ padding: "10px" }}>Ville</th>
+              <th style={{ padding: "10px" }}>Téléphone</th>
+              <th style={{ padding: "10px" }}>Type</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+
+          <tbody>
+            {clientsFiltres.map((c) => (
+              <tr key={c.id} style={{ borderTop: "1px solid #e5e7eb" }}>
+                <td style={{ padding: "10px" }}>
+                  <Link href={`/clients/${c.numero}`}>{c.numero}</Link>
+                </td>
+                <td style={{ padding: "10px" }}>
+                  <Link href={`/clients/${c.numero}`}>{c.nom}</Link>
+                </td>
+                <td style={{ padding: "10px" }}>{c.ville}</td>
+                <td style={{ padding: "10px" }}>{c.telephone}</td>
+                <td style={{ padding: "10px" }}>{c.type}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
