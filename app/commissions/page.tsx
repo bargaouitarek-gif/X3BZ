@@ -1,12 +1,32 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
+type Installation = {
+  id: number;
+  numeroClient: string;
+  installation: string;
+  gain: number;
+  notes: string;
+};
+
 export default function Page() {
   const commissionsVentes = 0;
   const commissionsPacks = 0;
   const commissionsInstallations = 0;
-  const installationsHorsdep = 0;
   const primesPaliers = 0;
   const bonus = 0;
+
+  const [installationsHorsdep, setInstallationsHorsdep] = useState(0);
+
+  useEffect(() => {
+    const data = localStorage.getItem("installationsHorsdep");
+    if (data) {
+      const installations: Installation[] = JSON.parse(data);
+      const total = installations.reduce((acc, item) => acc + item.gain, 0);
+      setInstallationsHorsdep(total);
+    }
+  }, []);
 
   const totalMois =
     commissionsVentes +
@@ -52,10 +72,7 @@ export default function Page() {
         >
           <Carte titre="Commissions ventes" valeur={commissionsVentes} />
           <Carte titre="Commissions packs" valeur={commissionsPacks} />
-          <Carte
-            titre="Commissions installations"
-            valeur={commissionsInstallations}
-          />
+          <Carte titre="Commissions installations" valeur={commissionsInstallations} />
           <Carte titre="Installations HORSDEP" valeur={installationsHorsdep} />
           <Carte titre="Primes paliers" valeur={primesPaliers} />
           <Carte titre="Bonus" valeur={bonus} />
@@ -103,14 +120,8 @@ export default function Page() {
             <tbody>
               <Ligne titre="Commissions ventes" valeur={commissionsVentes} />
               <Ligne titre="Commissions packs" valeur={commissionsPacks} />
-              <Ligne
-                titre="Commissions installations"
-                valeur={commissionsInstallations}
-              />
-              <Ligne
-                titre="Installations HORSDEP"
-                valeur={installationsHorsdep}
-              />
+              <Ligne titre="Commissions installations" valeur={commissionsInstallations} />
+              <Ligne titre="Installations HORSDEP" valeur={installationsHorsdep} />
               <Ligne titre="Primes paliers" valeur={primesPaliers} />
               <Ligne titre="Bonus" valeur={bonus} />
               <tr style={{ borderTop: "2px solid #d1d5db", fontWeight: "bold" }}>
