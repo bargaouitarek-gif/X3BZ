@@ -44,9 +44,8 @@ export default function Page() {
       details.push("-40€ 6MO");
     }
 
-    // CONSEIL INTELLIGENT
+    // CONSEIL
     let conseil = "";
-
     if (commission < 100) {
       conseil = "❌ Mauvaise config → trop de remise ou pas assez de packs";
     } else if (commission < 150) {
@@ -55,10 +54,26 @@ export default function Page() {
       conseil = "🔥 Très bon choix → bonne config";
     }
 
+    // 🔥 MEILLEURE CONFIG (base intelligente simple)
+    let best = 70;
+    let bestText = "👉 Ajoute des packs pour augmenter ta commission";
+
+    if (!packs.toLowerCase().includes("bac")) {
+      best += 50;
+      bestText = "👉 Ajoute BAC pour +50€";
+    }
+
+    if (!packs.toLowerCase().includes("aquila")) {
+      best += 30;
+      bestText += " + Aquila pour +30€";
+    }
+
     setResultat({
       commission,
       details,
       conseil,
+      best,
+      bestText,
     });
   }
 
@@ -94,7 +109,7 @@ export default function Page() {
 
       {resultat && (
         <div style={{ marginTop: 20 }}>
-          <h2>Commission estimée : {resultat.commission} €</h2>
+          <h2>💰 Commission estimée : {resultat.commission} €</h2>
 
           <ul>
             {resultat.details.map((d: string, i: number) => (
@@ -103,8 +118,13 @@ export default function Page() {
           </ul>
 
           <h3>{resultat.conseil}</h3>
+
+          <hr />
+
+          <h3>🔥 Meilleure config possible : {resultat.best} €</h3>
+          <p>{resultat.bestText}</p>
         </div>
       )}
     </main>
   );
-        }
+          }
