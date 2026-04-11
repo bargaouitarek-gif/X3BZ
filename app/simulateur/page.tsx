@@ -9,10 +9,10 @@ export default function Page() {
   const [resultat, setResultat] = useState<any>(null);
 
   function simuler() {
-    let commission = 70; // base START
+    let commission = 70;
     let details: string[] = [];
 
-    // Packs
+    // PACKS
     if (packs.toLowerCase().includes("bac")) {
       commission += 50;
       details.push("+50€ BAC");
@@ -23,7 +23,7 @@ export default function Page() {
       details.push("+30€ Aquila");
     }
 
-    // Codes ABO
+    // CODES ABO
     if (abo.includes("ABO5")) {
       commission -= 35;
       details.push("-35€ ABO5");
@@ -44,10 +44,21 @@ export default function Page() {
       details.push("-40€ 6MO");
     }
 
-    // Résultat final
+    // CONSEIL INTELLIGENT
+    let conseil = "";
+
+    if (commission < 100) {
+      conseil = "❌ Mauvaise config → trop de remise ou pas assez de packs";
+    } else if (commission < 150) {
+      conseil = "⚠️ Correct mais optimisable";
+    } else {
+      conseil = "🔥 Très bon choix → bonne config";
+    }
+
     setResultat({
       commission,
       details,
+      conseil,
     });
   }
 
@@ -61,17 +72,23 @@ export default function Page() {
         onChange={(e) => setBudget(e.target.value)}
       />
 
+      <br /><br />
+
       <input
-        placeholder="Packs (ex: BAC, Aquila...)"
+        placeholder="Packs (ex: BAC, Aquila)"
         value={packs}
         onChange={(e) => setPacks(e.target.value)}
       />
 
+      <br /><br />
+
       <input
-        placeholder="Codes ABO (ex: ABO5, 3MO...)"
+        placeholder="Codes ABO (ex: ABO5, 3MO)"
         value={abo}
         onChange={(e) => setAbo(e.target.value)}
       />
+
+      <br /><br />
 
       <button onClick={simuler}>Simuler</button>
 
@@ -84,8 +101,10 @@ export default function Page() {
               <li key={i}>{d}</li>
             ))}
           </ul>
+
+          <h3>{resultat.conseil}</h3>
         </div>
       )}
     </main>
   );
-}
+        }
